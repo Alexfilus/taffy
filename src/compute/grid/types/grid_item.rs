@@ -39,6 +39,8 @@ pub(in super::super) struct GridItem {
     /// Is it a compressible replaced element?
     /// https://drafts.csswg.org/css-sizing-3/#min-content-zero
     pub is_compressible_replaced: bool,
+    /// Whether descendants are ignored for intrinsic size contributions in each axis.
+    pub intrinsic_size_containment: Size<bool>,
     /// The item's overflow style
     pub overflow: Point<Overflow>,
     /// The item's box_sizing style
@@ -122,6 +124,7 @@ impl GridItem {
             row: UNPLACED,
             column: UNPLACED,
             is_compressible_replaced: style.is_compressible_replaced(),
+            intrinsic_size_containment: style.intrinsic_size_containment(),
             overflow: style.overflow(),
             box_sizing: style.box_sizing(),
             size: style.size(),
@@ -528,6 +531,11 @@ impl GridItem {
         if let Some(size) = known_dimensions.get(axis) {
             return size;
         }
+        if self.intrinsic_size_containment.get(axis) {
+            let padding = self.padding.resolve_or_zero(grid_area_size.width, |val, basis| tree.calc(val, basis));
+            let border = self.border.resolve_or_zero(grid_area_size.width, |val, basis| tree.calc(val, basis));
+            return (padding + border).sum_axes().get(axis);
+        }
         // The child sees the grid area as its containing block during intrinsic measurement, so
         // percentage box properties resolve against the grid area when that size is definite.
         // Spec:
@@ -580,6 +588,11 @@ impl GridItem {
         // and we can avoid calling into the child entirely.
         if let Some(size) = known_dimensions.get(axis) {
             return size;
+        }
+        if self.intrinsic_size_containment.get(axis) {
+            let padding = self.padding.resolve_or_zero(grid_area_size.width, |val, basis| tree.calc(val, basis));
+            let border = self.border.resolve_or_zero(grid_area_size.width, |val, basis| tree.calc(val, basis));
+            return (padding + border).sum_axes().get(axis);
         }
         // See the min-content path above. Max-content measurement uses the same containing-block
         // basis so percentage-dependent item geometry is measured from the grid area rather than

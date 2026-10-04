@@ -229,6 +229,9 @@ function describeElement(e) {
   let containingBlockElementBoundingRect = containingBlockElement(e).getBoundingClientRect();
 
   const computedStyle = getComputedStyle(e);
+  const containTokens = (e.style.contain || "").split(/\s+/);
+  const intrinsicSizeContainment = containTokens.includes("size") ? "both"
+    : containTokens.includes("inline-size") ? "width" : undefined;
 
   return {
     style: {
@@ -255,7 +258,8 @@ function describeElement(e) {
       overflowY: parseEnum(e.style.overflowY),
       scrollbarWidth: getScrollBarWidth(),
 
-      contain: parseEnum(e.style.contain),
+      contain: parseEnum(containTokens.filter(token => token !== "size" && token !== "inline-size").join(" ")),
+      intrinsicSizeContainment,
 
       alignItems: parseEnum(e.style.alignItems),
       alignSelf: parseEnum(e.style.alignSelf),

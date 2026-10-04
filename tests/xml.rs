@@ -358,6 +358,13 @@ fn build_style<S: CheapCloneStr>(xnode: roxmltree::Node) -> taffy::Style<S> {
         direction: parse_or_default(xnode.attribute("direction")),
         item_is_table: false,
         item_is_replaced: false,
+        intrinsic_size_containment: match xnode.attribute("intrinsic-size-containment") {
+            None => Size { width: false, height: false },
+            Some("width") => Size { width: true, height: false },
+            Some("height") => Size { width: false, height: true },
+            Some("both") => Size { width: true, height: true },
+            Some(value) => panic!("invalid intrinsic-size-containment: {value}"),
+        },
         box_sizing: parse_or_default(xnode.attribute("box-sizing")),
         overflow: Point {
             x: parse_or_default(xnode.attribute("overflow-x")),

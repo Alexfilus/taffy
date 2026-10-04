@@ -671,6 +671,7 @@ fn generate_node(w: &mut XmlWriter, node: &Value) {
     }
 
     maybe_write(w, "contain", get_str_attr(&style["contain"], Some("none")));
+    maybe_write(w, "intrinsic-size-containment", get_str_attr(&style["intrinsicSizeContainment"], None));
 
     maybe_write(w, "text-align", get_str_attr(&style["textAlign"], None));
     maybe_write(w, "align-items", get_str_attr(&style["alignItems"], None));

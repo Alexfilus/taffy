@@ -689,6 +689,11 @@ pub struct Style<S: CheapCloneStr = DefaultCheapStr> {
     /// Is it a replaced element like an image or form field?
     /// <https://drafts.csswg.org/css-sizing-3/#min-content-zero>
     pub item_is_replaced: bool,
+    /// Whether descendants are ignored for intrinsic size contributions in each axis.
+    ///
+    /// Ordinary final layout is unaffected, allowing an auto-sized grid item to
+    /// retain stretch alignment after its contained intrinsic contribution is removed.
+    pub intrinsic_size_containment: Size<bool>,
     /// Should size styles apply to the content box or the border box of the node
     pub box_sizing: BoxSizing,
     /// Sets the direction of text, table and grid columns, and horizontal overflow.
@@ -848,6 +853,7 @@ impl<S: CheapCloneStr> Style<S> {
         display: Display::DEFAULT,
         item_is_table: false,
         item_is_replaced: false,
+        intrinsic_size_containment: Size { width: false, height: false },
         box_sizing: BoxSizing::BorderBox,
         direction: Direction::Ltr,
         overflow: Point { x: Overflow::Visible, y: Overflow::Visible },
@@ -1479,6 +1485,10 @@ impl<T: GridContainerStyle> GridContainerStyle for &'_ T {
 #[cfg(feature = "grid")]
 impl<S: CheapCloneStr> GridItemStyle for Style<S> {
     #[inline(always)]
+    fn intrinsic_size_containment(&self) -> Size<bool> {
+        self.intrinsic_size_containment
+    }
+    #[inline(always)]
     fn grid_row(&self) -> Line<GridPlacement<S>> {
         // TODO: Investigate eliminating clone
         self.grid_row.clone()
@@ -1500,6 +1510,10 @@ impl<S: CheapCloneStr> GridItemStyle for Style<S> {
 
 #[cfg(feature = "grid")]
 impl<T: GridItemStyle> GridItemStyle for &'_ T {
+    #[inline(always)]
+    fn intrinsic_size_containment(&self) -> Size<bool> {
+        (*self).intrinsic_size_containment()
+    }
     #[inline(always)]
     fn grid_row(&self) -> Line<GridPlacement<Self::CustomIdent>> {
         (*self).grid_row()
@@ -1536,6 +1550,7 @@ mod tests {
             display: Default::default(),
             item_is_table: false,
             item_is_replaced: false,
+            intrinsic_size_containment: Size { width: false, height: false },
             box_sizing: Default::default(),
             #[cfg(feature = "float_layout")]
             float: Default::default(),
