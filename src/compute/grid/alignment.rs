@@ -326,6 +326,8 @@ pub(super) fn align_and_position_item(
     // Clamp size by min and max width/height
     let Size { width, height } = Size { width, height }.maybe_clamp(min_size, max_size);
 
+    let uses_inline_fit_content = !position.is_out_of_flow() && size_style.width.is_auto() && width.is_none();
+
     // Layout node
     let size = if position.is_out_of_flow() && (width.is_none() || height.is_none()) {
         tree.measure_child_size_both(
@@ -351,7 +353,35 @@ pub(super) fn align_and_position_item(
     );
 
     // Resolve final size
-    let Size { width, height } = size.unwrap_or(layout_output.size).maybe_clamp(min_size, max_size);
+    let mut resolved_size = size.unwrap_or(layout_output.size).maybe_clamp(min_size, max_size);
+    if uses_inline_fit_content && resolved_size.width > grid_area_minus_item_margins_size.width {
+        let min_content_width = tree.measure_child_size(
+            node,
+            Size { width: None, height: size.height },
+            grid_area_size.map(Option::Some),
+            Size {
+                width: AvailableSpace::MinContent,
+                height: AvailableSpace::Definite(grid_area_minus_item_margins_size.height),
+            },
+            SizingMode::InherentSize,
+            AbsoluteAxis::Horizontal,
+            Line::FALSE,
+        );
+        let fit_content_width = min_content_width
+            .max(grid_area_minus_item_margins_size.width.min(resolved_size.width))
+            .maybe_clamp(min_size.width, max_size.width);
+        layout_output = tree.perform_child_layout(
+            node,
+            Size { width: Some(fit_content_width), height: size.height },
+            grid_area_size.map(Option::Some),
+            grid_area_minus_item_margins_size.map(AvailableSpace::Definite),
+            SizingMode::InherentSize,
+            Line::FALSE,
+        );
+        resolved_size = Size { width: fit_content_width, height: size.height.unwrap_or(layout_output.size.height) }
+            .maybe_clamp(min_size, max_size);
+    }
+    let Size { width, height } = resolved_size;
 
     let (x, x_margin) = align_item_within_area(
         Line { start: grid_area.left, end: grid_area.right },

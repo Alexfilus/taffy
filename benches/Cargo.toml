@@ -61,3 +61,8 @@ harness = false
 name = "relayout"
 path = "benches/relayout.rs"
 harness = false
+
+[[bench]]
+name = "grid_fit_content"
+path = "benches/grid_fit_content.rs"
+harness = false

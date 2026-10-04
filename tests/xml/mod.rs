@@ -23039,6 +23039,54 @@ mod grid {
 
     #[cfg(feature = "grid")]
     #[test]
+    fn grid_auto_fit_content_nested__border_box_ltr() {
+        crate::run_xml_test("grid", "grid_auto_fit_content_nested__border_box_ltr");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_fit_content_nested__content_box_ltr() {
+        crate::run_xml_test("grid", "grid_auto_fit_content_nested__content_box_ltr");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_fit_content_nested__border_box_rtl() {
+        crate::run_xml_test("grid", "grid_auto_fit_content_nested__border_box_rtl");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_fit_content_nested__content_box_rtl() {
+        crate::run_xml_test("grid", "grid_auto_fit_content_nested__content_box_rtl");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_fit_content_unbreakable__border_box_ltr() {
+        crate::run_xml_test("grid", "grid_auto_fit_content_unbreakable__border_box_ltr");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_fit_content_unbreakable__content_box_ltr() {
+        crate::run_xml_test("grid", "grid_auto_fit_content_unbreakable__content_box_ltr");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_fit_content_unbreakable__border_box_rtl() {
+        crate::run_xml_test("grid", "grid_auto_fit_content_unbreakable__border_box_rtl");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_fit_content_unbreakable__content_box_rtl() {
+        crate::run_xml_test("grid", "grid_auto_fit_content_unbreakable__content_box_rtl");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
     fn grid_auto_fit_definite_percentage__border_box_ltr() {
         crate::run_xml_test("grid", "grid_auto_fit_definite_percentage__border_box_ltr");
     }

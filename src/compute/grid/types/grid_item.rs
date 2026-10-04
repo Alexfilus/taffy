@@ -533,8 +533,9 @@ impl GridItem {
         // Spec:
         // https://www.w3.org/TR/css-grid-1/#grid-item-sizing
         // https://www.w3.org/TR/css-grid-1/#algo-overview
-        tree.measure_child_size(
-            self.node,
+        self.measure_intrinsic_contribution(
+            tree,
+            axis,
             known_dimensions,
             grid_area_size,
             self.keyword_adjusted_available_space(
@@ -545,9 +546,6 @@ impl GridItem {
                 }),
                 tree,
             ),
-            SizingMode::InherentSize,
-            axis.as_abs_naive(),
-            Line::FALSE,
         )
     }
 
@@ -584,8 +582,9 @@ impl GridItem {
         // See the min-content path above. Max-content measurement uses the same containing-block
         // basis so percentage-dependent item geometry is measured from the grid area rather than
         // from the container.
-        tree.measure_child_size(
-            self.node,
+        self.measure_intrinsic_contribution(
+            tree,
+            axis,
             known_dimensions,
             grid_area_size,
             self.keyword_adjusted_available_space(
@@ -596,6 +595,57 @@ impl GridItem {
                 }),
                 tree,
             ),
+        )
+    }
+
+    /// Measure intrinsic height at the fit-content width without an extra query for items that already fit.
+    fn measure_intrinsic_contribution(
+        &self,
+        tree: &mut impl LayoutPartialTree,
+        axis: AbstractAxis,
+        known_dimensions: Size<Option<f32>>,
+        grid_area_size: Size<Option<f32>>,
+        available_space: Size<AvailableSpace>,
+    ) -> f32 {
+        if axis == AbstractAxis::Block && known_dimensions.width.is_none() && self.size.width.is_auto() {
+            if let AvailableSpace::Definite(available_width) = available_space.width {
+                let measured = tree.measure_child_size_both(
+                    self.node,
+                    known_dimensions,
+                    grid_area_size,
+                    available_space,
+                    SizingMode::InherentSize,
+                    Line::FALSE,
+                );
+                if measured.width <= available_width {
+                    return measured.height;
+                }
+                let min_content_width = tree.measure_child_size(
+                    self.node,
+                    known_dimensions,
+                    grid_area_size,
+                    Size { width: AvailableSpace::MinContent, ..available_space },
+                    SizingMode::InherentSize,
+                    crate::AbsoluteAxis::Horizontal,
+                    Line::FALSE,
+                );
+                let fit_content_width = min_content_width.max(available_width.min(measured.width));
+                return tree.measure_child_size(
+                    self.node,
+                    Size { width: Some(fit_content_width), ..known_dimensions },
+                    grid_area_size,
+                    available_space,
+                    SizingMode::InherentSize,
+                    crate::AbsoluteAxis::Vertical,
+                    Line::FALSE,
+                );
+            }
+        }
+        tree.measure_child_size(
+            self.node,
+            known_dimensions,
+            grid_area_size,
+            available_space,
             SizingMode::InherentSize,
             axis.as_abs_naive(),
             Line::FALSE,

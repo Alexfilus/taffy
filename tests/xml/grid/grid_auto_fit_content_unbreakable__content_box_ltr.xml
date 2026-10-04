@@ -1,0 +1,19 @@
+<test name="grid_auto_fit_content_unbreakable__content_box_ltr" use-rounding="true">
+  <viewport width="max-content" height="max-content"/>
+  <input>
+    <div display="grid" box-sizing="content-box" direction="ltr" position="absolute" width="300px" grid-template-columns="300px">
+      <div display="grid" box-sizing="content-box" direction="ltr" position="relative" justify-self="center" grid-template-columns="1fr">
+        <text box-sizing="content-box" direction="ltr" position="relative">
+          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        </text>
+      </div>
+    </div>
+  </input>
+  <expectations>
+    <node x="0" y="0" width="300" height="10" resolved-rows="10px" resolved-columns="300px">
+      <node x="-150" y="0" width="600" height="10" resolved-rows="10px" resolved-columns="600px">
+        <node x="0" y="0" width="600" height="10"/>
+      </node>
+    </node>
+  </expectations>
+</test>
