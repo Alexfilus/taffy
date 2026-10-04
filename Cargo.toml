@@ -119,3 +119,8 @@ members = [
 # The cosmic_text example and benches are excluded from the workspace as including them breaks compilation
 # of all crates in the workspace with our MSRV compiler
 exclude = ["examples/cosmic_text", "benches"]
+
+[[bench]]
+name = "intrinsic_collapsed_margins"
+path = "benches/intrinsic_collapsed_margins.rs"
+harness = false
