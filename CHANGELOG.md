@@ -36,6 +36,8 @@
 
 ### Added
 
+- `TaffyTree::set_calc_resolver` installs a callback for resolving opaque `calc()` handles against their percentage basis.
+
 - `compute_oof_layout_for_area` and `OofLayoutResult` allow integrations to lay out out-of-flow candidates against an explicit positioning area without immediately mutating a layout node's hoisted-child list. This supports containing blocks represented outside Taffy's layout tree.
 
 ### Changed
