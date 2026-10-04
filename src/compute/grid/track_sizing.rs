@@ -1502,6 +1502,11 @@ fn distribute_space_up_to_limits(
     // prevent any space from being distributed, so we bound the iteration count to guarantee termination.
     let max_iterations = tracks.len() + 1;
 
+    let can_grow = |track: &GridTrack| {
+        let increase = track.item_incurred_increase;
+        let room = track_limit(track) - track_affected_property(track) - increase;
+        track_affected_property(track) + increase < track_limit(track) && increase + room > increase
+    };
     let mut space_to_distribute = space_to_distribute;
     for _ in 0..max_iterations {
         if space_to_distribute <= THRESHOLD {
@@ -1509,7 +1514,7 @@ fn distribute_space_up_to_limits(
         }
         let track_distribution_proportion_sum: f32 = tracks
             .iter()
-            .filter(|track| track_affected_property(track) + track.item_incurred_increase < track_limit(track))
+            .filter(|track| can_grow(track))
             .filter(|track| track_is_affected(track))
             .map(&track_distribution_proportion)
             .sum();
@@ -1521,7 +1526,7 @@ fn distribute_space_up_to_limits(
         // Compute item-incurred increase for this iteration
         let min_increase_limit = tracks
             .iter()
-            .filter(|track| track_affected_property(track) + track.item_incurred_increase < track_limit(track))
+            .filter(|track| can_grow(track))
             .filter(|track| track_is_affected(track))
             .map(|track| {
                 (track_limit(track) - track_affected_property(track) - track.item_incurred_increase)
@@ -1533,6 +1538,9 @@ fn distribute_space_up_to_limits(
             f32_min(min_increase_limit, space_to_distribute / track_distribution_proportion_sum);
 
         for track in tracks.iter_mut().filter(|track| track_is_affected(track)) {
+            if !can_grow(track) {
+                continue;
+            }
             let increase = iteration_item_incurred_increase * track_distribution_proportion(track);
             if increase > 0.0
                 && track_affected_property(track) + track.item_incurred_increase + increase

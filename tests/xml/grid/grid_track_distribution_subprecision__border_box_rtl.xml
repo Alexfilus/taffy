@@ -1,0 +1,15 @@
+<test name="grid_track_distribution_subprecision__border_box_rtl" use-rounding="true">
+  <viewport width="max-content" height="max-content"/>
+  <input>
+    <div display="grid" direction="rtl" position="absolute" width="2000px" grid-template-columns="minmax(173.688px, 993.3px) minmax(0px, 3000px)">
+      <div direction="rtl" position="relative"/>
+      <div direction="rtl" position="relative"/>
+    </div>
+  </input>
+  <expectations>
+    <node x="0" y="0" width="2000" height="0" resolved-rows="0px" resolved-columns="993.297px 1006.7px">
+      <node x="1007" y="0" width="993" height="0"/>
+      <node x="0" y="0" width="1007" height="0"/>
+    </node>
+  </expectations>
+</test>
