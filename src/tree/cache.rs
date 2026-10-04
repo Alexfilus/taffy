@@ -110,6 +110,12 @@ impl CacheKey {
     fn x_axis_parent_size(&self) -> u64 {
         self.parent_size & (X_AXIS_VALUE_MASK & NON_SIGN_BITS_MASK)
     }
+
+    /// Whether the key was built for a `RequestedAxis::Horizontal` request. Layout algorithms may
+    /// answer such a request with a placeholder height of 0.
+    fn is_width_only(&self) -> bool {
+        self.parent_size & BOTH_SIGN_BITS_MASK == SIGN_BIT_1
+    }
 }
 
 impl From<&LayoutInput> for CacheKey {
@@ -270,6 +276,7 @@ impl Cache {
                 for entry in self.measure_entries.iter().flatten() {
                     if entry.key.kd_available_space == key.kd_available_space
                         && (entry.key.x_axis_parent_size() == key.x_axis_parent_size())
+                        && (!entry.key.is_width_only() || key.is_width_only())
                         && entry.content.vertical_margins_are_collapsible
                             == vertical_margin_context_key(input)
                     {
@@ -324,4 +331,42 @@ pub enum ClearState {
     Cleared,
     /// Everything was already cleared
     AlreadyEmpty,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::geometry::Line;
+    use crate::tree::SizingMode;
+
+    fn measure_input(axis: RequestedAxis) -> LayoutInput {
+        LayoutInput {
+            run_mode: RunMode::ComputeSize,
+            sizing_mode: SizingMode::InherentSize,
+            axis,
+            known_dimensions: Size { width: Some(100.0), height: None },
+            parent_size: Size { width: Some(100.0), height: None },
+            available_space: Size { width: AvailableSpace::MinContent, height: AvailableSpace::MinContent },
+            vertical_margins_are_collapsible: Line::FALSE,
+        }
+    }
+
+    #[test]
+    fn width_only_entry_does_not_answer_height_requests() {
+        let mut cache = Cache::new();
+        cache.store(
+            &measure_input(RequestedAxis::Horizontal),
+            LayoutOutput::from_outer_size(Size { width: 100.0, height: 0.0 }),
+        );
+
+        assert!(cache.get(&measure_input(RequestedAxis::Horizontal)).is_some());
+        assert!(cache.get(&measure_input(RequestedAxis::Vertical)).is_none());
+        assert!(cache.get(&measure_input(RequestedAxis::Both)).is_none());
+
+        let full = LayoutOutput::from_outer_size(Size { width: 100.0, height: 80.0 });
+        cache.store(&measure_input(RequestedAxis::Vertical), full);
+        for axis in [RequestedAxis::Horizontal, RequestedAxis::Vertical, RequestedAxis::Both] {
+            assert_eq!(cache.get(&measure_input(axis)).map(|output| output.size), Some(full.size));
+        }
+    }
 }

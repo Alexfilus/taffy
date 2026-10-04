@@ -121,6 +121,11 @@ members = [
 exclude = ["examples/cosmic_text", "benches"]
 
 [[bench]]
+name = "width_only_cache"
+path = "benches/width_only_cache.rs"
+harness = false
+
+[[bench]]
 name = "intrinsic_collapsed_margins"
 path = "benches/intrinsic_collapsed_margins.rs"
 harness = false
