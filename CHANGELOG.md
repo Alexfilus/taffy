@@ -49,6 +49,8 @@
 
 ### Fixed
 
+- Flexbox: derive automatic cross sizes from the final flexed main size through the preferred aspect ratio, respecting its content- or border-box provenance.
+
 - The space available to a shrink-to-fit absolutely positioned box now excludes its (non-`auto`) insets as well as its margins. Previously a box with e.g. `left: 60px` in a 100px wide containing block was sized as if it had 100px available and overflowed its containing block rather than wrapping its content.
 - Grid: an item's margins are now subtracted from the space available to it in the opposite axis when computing its intrinsic contribution to a track's size (previously a row could be sized for an item wrapped at the full column width while the item was then laid out at the column width minus its margins).
 - The `serde` feature now compiles without the `std` feature

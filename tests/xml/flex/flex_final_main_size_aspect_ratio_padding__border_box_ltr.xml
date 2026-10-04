@@ -1,0 +1,13 @@
+<test name="flex_final_main_size_aspect_ratio_padding__border_box_ltr" use-rounding="true">
+  <viewport width="max-content" height="max-content"/>
+  <input>
+    <div display="flex" direction="ltr" position="absolute" align-items="start" width="300px">
+      <div direction="ltr" position="relative" flex-grow="1" width="100px" aspect-ratio="2" padding-top="10px" padding-left="10px" padding-bottom="10px" padding-right="10px" border-top="5px" border-left="5px" border-bottom="5px" border-right="5px"/>
+    </div>
+  </input>
+  <expectations>
+    <node x="0" y="0" width="300" height="150">
+      <node x="0" y="0" width="300" height="150"/>
+    </node>
+  </expectations>
+</test>

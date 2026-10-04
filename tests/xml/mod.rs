@@ -12968,6 +12968,66 @@ mod flex {
     }
 
     #[test]
+    fn flex_final_aspect_ratio_min_max__border_box_ltr() {
+        crate::run_xml_test("flex", "flex_final_aspect_ratio_min_max__border_box_ltr");
+    }
+
+    #[test]
+    fn flex_final_aspect_ratio_min_max__content_box_ltr() {
+        crate::run_xml_test("flex", "flex_final_aspect_ratio_min_max__content_box_ltr");
+    }
+
+    #[test]
+    fn flex_final_aspect_ratio_min_max__border_box_rtl() {
+        crate::run_xml_test("flex", "flex_final_aspect_ratio_min_max__border_box_rtl");
+    }
+
+    #[test]
+    fn flex_final_aspect_ratio_min_max__content_box_rtl() {
+        crate::run_xml_test("flex", "flex_final_aspect_ratio_min_max__content_box_rtl");
+    }
+
+    #[test]
+    fn flex_final_main_size_aspect_ratio__border_box_ltr() {
+        crate::run_xml_test("flex", "flex_final_main_size_aspect_ratio__border_box_ltr");
+    }
+
+    #[test]
+    fn flex_final_main_size_aspect_ratio__content_box_ltr() {
+        crate::run_xml_test("flex", "flex_final_main_size_aspect_ratio__content_box_ltr");
+    }
+
+    #[test]
+    fn flex_final_main_size_aspect_ratio__border_box_rtl() {
+        crate::run_xml_test("flex", "flex_final_main_size_aspect_ratio__border_box_rtl");
+    }
+
+    #[test]
+    fn flex_final_main_size_aspect_ratio__content_box_rtl() {
+        crate::run_xml_test("flex", "flex_final_main_size_aspect_ratio__content_box_rtl");
+    }
+
+    #[test]
+    fn flex_final_main_size_aspect_ratio_padding__border_box_ltr() {
+        crate::run_xml_test("flex", "flex_final_main_size_aspect_ratio_padding__border_box_ltr");
+    }
+
+    #[test]
+    fn flex_final_main_size_aspect_ratio_padding__content_box_ltr() {
+        crate::run_xml_test("flex", "flex_final_main_size_aspect_ratio_padding__content_box_ltr");
+    }
+
+    #[test]
+    fn flex_final_main_size_aspect_ratio_padding__border_box_rtl() {
+        crate::run_xml_test("flex", "flex_final_main_size_aspect_ratio_padding__border_box_rtl");
+    }
+
+    #[test]
+    fn flex_final_main_size_aspect_ratio_padding__content_box_rtl() {
+        crate::run_xml_test("flex", "flex_final_main_size_aspect_ratio_padding__content_box_rtl");
+    }
+
+    #[test]
     fn flex_grow_0_min_size__border_box_ltr() {
         crate::run_xml_test("flex", "flex_grow_0_min_size__border_box_ltr");
     }

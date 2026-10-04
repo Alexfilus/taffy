@@ -63,6 +63,11 @@ path = "benches/relayout.rs"
 harness = false
 
 [[bench]]
+name = "flex_final_aspect_ratio"
+path = "benches/flex_final_aspect_ratio.rs"
+harness = false
+
+[[bench]]
 name = "grid_replaced_sizing"
 path = "benches/grid_replaced_sizing.rs"
 harness = false

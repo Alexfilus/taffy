@@ -1,0 +1,27 @@
+<test name="flex_final_aspect_ratio_min_max__content_box_rtl" use-rounding="true">
+  <viewport width="max-content" height="max-content"/>
+  <input>
+    <div display="flex" box-sizing="content-box" direction="rtl" position="absolute" align-items="center" justify-content="center" width="2048px" height="512px" row-gap="8px" column-gap="8px">
+      <div box-sizing="content-box" direction="rtl" position="relative" flex-grow="1" flex-shrink="0" min-width="64px" min-height="64px" max-width="128px" max-height="128px" aspect-ratio="1"/>
+      <div box-sizing="content-box" direction="rtl" position="relative" flex-grow="1" flex-shrink="0" min-width="64px" min-height="64px" max-width="128px" max-height="128px" aspect-ratio="1"/>
+      <div box-sizing="content-box" direction="rtl" position="relative" flex-grow="1" flex-shrink="0" min-width="64px" min-height="64px" max-width="128px" max-height="128px" aspect-ratio="1"/>
+      <div box-sizing="content-box" direction="rtl" position="relative" flex-grow="1" flex-shrink="0" min-width="64px" min-height="64px" max-width="128px" max-height="128px" aspect-ratio="1"/>
+      <div box-sizing="content-box" direction="rtl" position="relative" flex-grow="1" flex-shrink="0" min-width="64px" min-height="64px" max-width="128px" max-height="128px" aspect-ratio="1"/>
+      <div box-sizing="content-box" direction="rtl" position="relative" flex-grow="1" flex-shrink="0" min-width="64px" min-height="64px" max-width="128px" max-height="128px" aspect-ratio="1"/>
+      <div box-sizing="content-box" direction="rtl" position="relative" flex-grow="1" flex-shrink="0" min-width="64px" min-height="64px" max-width="128px" max-height="128px" aspect-ratio="1"/>
+      <div box-sizing="content-box" direction="rtl" position="relative" flex-grow="1" flex-shrink="0" min-width="64px" min-height="64px" max-width="128px" max-height="128px" aspect-ratio="1"/>
+    </div>
+  </input>
+  <expectations>
+    <node x="0" y="0" width="2048" height="512">
+      <node x="1436" y="192" width="128" height="128"/>
+      <node x="1300" y="192" width="128" height="128"/>
+      <node x="1164" y="192" width="128" height="128"/>
+      <node x="1028" y="192" width="128" height="128"/>
+      <node x="892" y="192" width="128" height="128"/>
+      <node x="756" y="192" width="128" height="128"/>
+      <node x="620" y="192" width="128" height="128"/>
+      <node x="484" y="192" width="128" height="128"/>
+    </node>
+  </expectations>
+</test>

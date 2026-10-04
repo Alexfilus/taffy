@@ -23,6 +23,29 @@ use super::common::alignment::apply_alignment_fallback;
 use super::common::scrollable_overflow::compute_scrollable_overflow_contribution;
 use super::common::sizing_keyword::{resolve_sizing_keyword, SizingKeywordResolution};
 
+/// Transfer a known size through the ratio using the selected box.
+#[inline]
+fn maybe_apply_preferred_aspect_ratio(
+    size: Size<Option<f32>>,
+    aspect_ratio: Option<f32>,
+    adjustment: Size<f32>,
+) -> Size<Option<f32>> {
+    match aspect_ratio {
+        Some(ratio) if ratio.is_finite() && ratio > 0.0 => match (size.width, size.height) {
+            (Some(width), None) => Size {
+                width: Some(width),
+                height: Some((width - adjustment.width).max(0.0) / ratio + adjustment.height),
+            },
+            (None, Some(height)) => Size {
+                width: Some((height - adjustment.height).max(0.0) * ratio + adjustment.width),
+                height: Some(height),
+            },
+            _ => size,
+        },
+        _ => size,
+    }
+}
+
 /// The intermediate results of a flexbox calculation for a single item
 struct FlexItem {
     /// The identifier for the associated node
@@ -42,6 +65,8 @@ struct FlexItem {
     max_size: Size<Option<f32>>,
     /// The aspect ratio of this item
     aspect_ratio: Option<f32>,
+    /// Insets excluded when transferring a size through the preferred ratio.
+    aspect_ratio_adjustment: Size<f32>,
     /// The cross-alignment of this item
     align_self: AlignSelf,
 
@@ -728,14 +753,19 @@ fn generate_anonymous_flex_items(
             let pb_sum = (padding + border).sum_axes();
             let box_sizing_adjustment =
                 if child_style.box_sizing() == BoxSizing::ContentBox { pb_sum } else { Size::ZERO };
+            let aspect_ratio_adjustment =
+                if child_style.aspect_ratio_uses_content_box() { pb_sum } else { box_sizing_adjustment };
             FlexItem {
                 node: child,
                 order: index as u32,
-                size: child_style
-                    .size()
-                    .maybe_resolve(percent_resolution_size, |val, basis| tree.calc(val, basis))
-                    .maybe_apply_aspect_ratio(aspect_ratio)
-                    .maybe_add(box_sizing_adjustment),
+                size: maybe_apply_preferred_aspect_ratio(
+                    child_style
+                        .size()
+                        .maybe_resolve(percent_resolution_size, |val, basis| tree.calc(val, basis))
+                        .maybe_add(box_sizing_adjustment),
+                    aspect_ratio,
+                    aspect_ratio_adjustment,
+                ),
                 size_style: child_style.size(),
                 min_size: child_style
                     .min_size()
@@ -746,6 +776,7 @@ fn generate_anonymous_flex_items(
                     .maybe_resolve(percent_resolution_size, |val, basis| tree.calc(val, basis))
                     .maybe_add(box_sizing_adjustment),
                 aspect_ratio,
+                aspect_ratio_adjustment,
 
                 relative_inset: if child_style.position() == Position::Relative {
                     let inset = child_style.inset().zip_size(constants.node_inner_size, |p, s| {
@@ -1881,9 +1912,18 @@ fn determine_hypothetical_cross_size(
         let transferred_min_cross = child.min_size.maybe_apply_aspect_ratio(child.aspect_ratio).cross(constants.dir);
         let transferred_max_cross = child.max_size.maybe_apply_aspect_ratio(child.aspect_ratio).cross(constants.dir);
 
-        let child_cross = child
-            .size
+        let ratio_cross = if child.size_style.cross(constants.dir).is_auto() {
+            maybe_apply_preferred_aspect_ratio(
+                Size::NONE.with_main(constants.dir, Some(child.target_size.main(constants.dir))),
+                child.aspect_ratio,
+                child.aspect_ratio_adjustment,
+            )
             .cross(constants.dir)
+        } else {
+            None
+        };
+        let child_cross = ratio_cross
+            .or(child.size.cross(constants.dir))
             .maybe_clamp(transferred_min_cross, transferred_max_cross)
             .maybe_max(padding_border_sum);
 
