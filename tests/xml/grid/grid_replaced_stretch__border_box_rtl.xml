@@ -1,0 +1,13 @@
+<test name="grid_replaced_stretch__border_box_rtl" use-rounding="true">
+  <viewport width="max-content" height="max-content"/>
+  <input>
+    <div display="grid" direction="rtl" position="absolute" width="300px" height="200px" grid-template-rows="200px" grid-template-columns="300px">
+      <div direction="rtl" position="relative" align-self="stretch" justify-self="stretch" aspect-ratio="2" intrinsic-width="120" intrinsic-height="60" item-is-replaced="true" aspect-ratio-is-intrinsic="true"/>
+    </div>
+  </input>
+  <expectations>
+    <node x="0" y="0" width="300" height="200" resolved-rows="200px" resolved-columns="300px">
+      <node x="0" y="0" width="300" height="200"/>
+    </node>
+  </expectations>
+</test>

@@ -51,6 +51,8 @@ pub(in super::super) struct GridItem {
     pub max_size: Size<LengthPercentageAuto>,
     /// The item's aspect_ratio style
     pub aspect_ratio: Option<f32>,
+    /// Whether the preferred ratio applies to the content box.
+    pub aspect_ratio_uses_content_box: bool,
     /// The item's padding style
     pub padding: Rect<LengthPercentage>,
     /// The item's border style
@@ -128,6 +130,7 @@ impl GridItem {
             min_size: style.min_size(),
             max_size: style.max_size(),
             aspect_ratio: style.aspect_ratio(),
+            aspect_ratio_uses_content_box: style.aspect_ratio_uses_content_box(),
             padding: style.padding(),
             border: style.border(),
             margin: style.margin(),
@@ -318,6 +321,12 @@ impl GridItem {
         let margins = self.margins_axis_sums_with_baseline_shims(grid_area_size.width, tree);
 
         let aspect_ratio = self.aspect_ratio;
+        let alignment = super::super::resolve_item_alignment(
+            self.justify_self,
+            self.align_self,
+            self.is_compressible_replaced,
+            aspect_ratio.is_some(),
+        );
         // CSS resolves percentage padding and border against the inline size of the containing
         // block. For a grid item under intrinsic measurement, that inline-size basis is the grid
         // area's width when it is definite.
@@ -329,10 +338,11 @@ impl GridItem {
         let padding_border_size = (padding + border).sum_axes();
         let box_sizing_adjustment =
             if self.box_sizing == BoxSizing::ContentBox { padding_border_size } else { Size::ZERO };
+        let aspect_ratio_adjustment =
+            if self.aspect_ratio_uses_content_box { padding_border_size } else { box_sizing_adjustment };
         let inherent_size = self
             .size
             .maybe_resolve(grid_area_size, |val, basis| tree.calc(val, basis))
-            .maybe_apply_aspect_ratio(aspect_ratio)
             .maybe_add(box_sizing_adjustment);
         let min_size = self
             .min_size
@@ -370,17 +380,14 @@ impl GridItem {
             //  - Alignment style is "stretch"
             //  - The node is not absolutely positioned
             //  - The node does not have auto margins in this axis.
-            if !self.margin.left.is_auto() && !self.margin.right.is_auto() && self.justify_self == AlignSelf::STRETCH {
+            if !self.margin.left.is_auto() && !self.margin.right.is_auto() && alignment.horizontal == AlignSelf::STRETCH
+            {
                 return grid_area_minus_item_margins_size.width;
             }
 
             None
         });
-        // Reapply aspect ratio after stretch and absolute position width adjustments
-        let Size { width, height } =
-            Size { width, height: inherent_size.height }.maybe_apply_aspect_ratio(aspect_ratio);
-
-        let height = height.or_else(|| {
+        let height = inherent_size.height.or_else(|| {
             // A height that is a sizing keyword is not auto, so it does not stretch. The stretch
             // keyword resolves to an exact height; the others resolve during content measurement.
             if self.size.height.is_sizing_keyword() {
@@ -398,14 +405,15 @@ impl GridItem {
             //  - Alignment style is "stretch"
             //  - The node is not absolutely positioned
             //  - The node does not have auto margins in this axis.
-            if !self.margin.top.is_auto() && !self.margin.bottom.is_auto() && self.align_self == AlignSelf::STRETCH {
+            if !self.margin.top.is_auto() && !self.margin.bottom.is_auto() && alignment.vertical == AlignSelf::STRETCH {
                 return grid_area_minus_item_margins_size.height;
             }
 
             None
         });
         // Reapply aspect ratio after stretch and absolute position height adjustments
-        let Size { width, height } = Size { width, height }.maybe_apply_aspect_ratio(aspect_ratio);
+        let Size { width, height } =
+            super::super::apply_preferred_aspect_ratio(Size { width, height }, aspect_ratio, aspect_ratio_adjustment);
 
         // Clamp size by min and max width/height
         let Size { width, height } = Size { width, height }.maybe_clamp(min_size, max_size);

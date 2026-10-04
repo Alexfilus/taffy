@@ -254,8 +254,8 @@ pub fn compute_grid_layout<Tree: LayoutGridContainer>(
         &mut items,
         in_flow_children_iter,
         style.grid_auto_flow(),
-        align_items.unwrap_or(AlignItems::STRETCH),
-        justify_items.unwrap_or(AlignItems::STRETCH),
+        align_items.unwrap_or(AlignItems::NORMAL),
+        justify_items.unwrap_or(AlignItems::NORMAL),
         &name_resolver,
     );
 
@@ -1291,5 +1291,75 @@ impl DetailedGridItemsInfo {
             column_start: to_one_indexed_grid_line(grid_item.column_indexes.start),
             column_end: to_one_indexed_grid_line(grid_item.column_indexes.end),
         }
+    }
+}
+
+/// Resolve normal alignment for replaced and ratio-sized grid items.
+#[inline]
+fn resolve_item_alignment(
+    horizontal: AlignSelf,
+    vertical: AlignSelf,
+    is_compressible_replaced: bool,
+    has_preferred_aspect_ratio: bool,
+) -> InBothAbsAxis<AlignSelf> {
+    if is_compressible_replaced {
+        return InBothAbsAxis {
+            horizontal: horizontal.resolve_normal(AlignSelf::START),
+            vertical: vertical.resolve_normal(AlignSelf::START),
+        };
+    }
+    if !has_preferred_aspect_ratio {
+        return InBothAbsAxis {
+            horizontal: horizontal.resolve_normal(AlignSelf::STRETCH),
+            vertical: vertical.resolve_normal(AlignSelf::STRETCH),
+        };
+    }
+
+    let horizontal_is_normal = horizontal == AlignSelf::NORMAL;
+    let vertical_is_normal = vertical == AlignSelf::NORMAL;
+    InBothAbsAxis {
+        horizontal: if horizontal_is_normal {
+            if !vertical_is_normal && vertical == AlignSelf::STRETCH {
+                AlignSelf::START
+            } else {
+                AlignSelf::STRETCH
+            }
+        } else {
+            horizontal
+        },
+        vertical: if vertical_is_normal {
+            if !horizontal_is_normal && horizontal != AlignSelf::STRETCH {
+                AlignSelf::STRETCH
+            } else {
+                AlignSelf::START
+            }
+        } else {
+            vertical
+        },
+    }
+}
+
+/// Transfer a known size through the ratio using the selected box.
+#[inline]
+fn apply_preferred_aspect_ratio(
+    size: Size<Option<f32>>,
+    aspect_ratio: Option<f32>,
+    box_sizing_adjustment: Size<f32>,
+) -> Size<Option<f32>> {
+    let Some(aspect_ratio) = aspect_ratio else { return size };
+    match size {
+        Size { width: Some(width), height: None } => Size {
+            width: Some(width),
+            height: Some(
+                f32_max(width - box_sizing_adjustment.width, 0.0) / aspect_ratio + box_sizing_adjustment.height,
+            ),
+        },
+        Size { width: None, height: Some(height) } => Size {
+            width: Some(
+                f32_max(height - box_sizing_adjustment.height, 0.0) * aspect_ratio + box_sizing_adjustment.width,
+            ),
+            height: Some(height),
+        },
+        _ => size,
     }
 }

@@ -229,6 +229,11 @@ function describeElement(e) {
   let containingBlockElementBoundingRect = containingBlockElement(e).getBoundingClientRect();
 
   const computedStyle = getComputedStyle(e);
+  const isImage = e instanceof HTMLImageElement;
+  if (isImage && (!e.complete || e.naturalWidth <= 0 || e.naturalHeight <= 0)) {
+    throw new Error("Image fixtures must have loaded positive intrinsic dimensions");
+  }
+  const intrinsicAspectRatio = isImage && (!e.style.aspectRatio || e.style.aspectRatio === "auto");
 
   return {
     style: {
@@ -287,7 +292,11 @@ function describeElement(e) {
       size: parseSize({ width: e.style.width, height: e.style.height }),
       minSize: parseSize({ width: e.style.minWidth, height: e.style.minHeight }),
       maxSize: parseSize({ width: e.style.maxWidth, height: e.style.maxHeight }),
-      aspectRatio: parseRatio(e.style.aspectRatio),
+      aspectRatio: intrinsicAspectRatio ? e.naturalWidth / e.naturalHeight : parseRatio(e.style.aspectRatio),
+      itemIsReplaced: isImage || undefined,
+      intrinsicWidth: isImage ? e.naturalWidth : undefined,
+      intrinsicHeight: isImage ? e.naturalHeight : undefined,
+      intrinsicAspectRatio: intrinsicAspectRatio || undefined,
 
       margin: parseEdges({
         left: e.style.marginLeft,

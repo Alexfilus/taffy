@@ -258,11 +258,14 @@ fn construct_tree(
         let writing_mode = parse_or_default(input.attribute("writing-mode"));
 
         let tnode = tree.new_leaf(build_style(input)).unwrap();
-        tree.set_node_context(
-            tnode,
-            text_content.map(|text_content| TestNodeContext::ahem_text(text_content.to_string(), writing_mode)),
-        )
-        .unwrap();
+        let context = match (
+            maybe_parse::<f32>(input.attribute("intrinsic-width")),
+            maybe_parse::<f32>(input.attribute("intrinsic-height")),
+        ) {
+            (Some(width), Some(height)) => Some(TestNodeContext::aspect_ratio(width, height / width)),
+            _ => text_content.map(|text| TestNodeContext::ahem_text(text.to_string(), writing_mode)),
+        };
+        tree.set_node_context(tnode, context).unwrap();
 
         if let Some(parent) = parent {
             tree.add_child(parent, tnode).unwrap();
@@ -357,7 +360,8 @@ fn build_style<S: CheapCloneStr>(xnode: roxmltree::Node) -> taffy::Style<S> {
         display: parse_or_default(xnode.attribute("display")),
         direction: parse_or_default(xnode.attribute("direction")),
         item_is_table: false,
-        item_is_replaced: false,
+        item_is_replaced: parse_or_default(xnode.attribute("item-is-replaced")),
+        item_aspect_ratio_is_intrinsic: parse_or_default(xnode.attribute("aspect-ratio-is-intrinsic")),
         box_sizing: parse_or_default(xnode.attribute("box-sizing")),
         overflow: Point {
             x: parse_or_default(xnode.attribute("overflow-x")),

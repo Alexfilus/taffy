@@ -139,11 +139,11 @@ pub(super) fn align_and_position_item(
     let box_sizing_adjustment =
         if style.box_sizing() == BoxSizing::ContentBox { padding_border_size } else { Size::ZERO };
 
+    let aspect_ratio_adjustment =
+        if style.aspect_ratio_uses_content_box() { padding_border_size } else { box_sizing_adjustment };
     let size_style = style.size();
-    let inherent_size = size_style
-        .maybe_resolve(grid_area_size, |val, basis| tree.calc(val, basis))
-        .maybe_apply_aspect_ratio(aspect_ratio)
-        .maybe_add(box_sizing_adjustment);
+    let inherent_size =
+        size_style.maybe_resolve(grid_area_size, |val, basis| tree.calc(val, basis)).maybe_add(box_sizing_adjustment);
     let min_size = style
         .min_size()
         .maybe_resolve(grid_area_size, |val, basis| tree.calc(val, basis))
@@ -157,26 +157,12 @@ pub(super) fn align_and_position_item(
         .maybe_apply_aspect_ratio(aspect_ratio)
         .maybe_add(box_sizing_adjustment);
 
-    // Resolve default alignment styles if they are set on neither the parent or the node itself
-    // Note: if the child has a preferred aspect ratio but neither width or height are set, then the width is stretched
-    // and the then height is calculated from the width according the aspect ratio
-    // See: https://www.w3.org/TR/css-grid-1/#grid-item-sizing
-    let alignment_styles = InBothAbsAxis {
-        horizontal: justify_self.or(container_alignment_styles.horizontal).unwrap_or_else(|| {
-            if inherent_size.width.is_some() || size_style.width.is_sizing_keyword() {
-                AlignSelf::START
-            } else {
-                AlignSelf::STRETCH
-            }
-        }),
-        vertical: align_self.or(container_alignment_styles.vertical).unwrap_or_else(|| {
-            if inherent_size.height.is_some() || size_style.height.is_sizing_keyword() || aspect_ratio.is_some() {
-                AlignSelf::START
-            } else {
-                AlignSelf::STRETCH
-            }
-        }),
-    };
+    let alignment_styles = super::resolve_item_alignment(
+        justify_self.or(container_alignment_styles.horizontal).unwrap_or(AlignSelf::NORMAL),
+        align_self.or(container_alignment_styles.vertical).unwrap_or(AlignSelf::NORMAL),
+        style.is_compressible_replaced(),
+        aspect_ratio.is_some(),
+    );
 
     // Note: This is not a bug. It is part of the CSS spec that both horizontal and vertical margins
     // resolve against the WIDTH of the grid area.
@@ -273,7 +259,16 @@ pub(super) fn align_and_position_item(
     });
 
     // Reapply aspect ratio after stretch and absolute position width adjustments
-    let Size { width, height } = Size { width, height: inherent_size.height }.maybe_apply_aspect_ratio(aspect_ratio);
+    let height = if position.is_out_of_flow() {
+        super::apply_preferred_aspect_ratio(
+            Size { width, height: inherent_size.height },
+            aspect_ratio,
+            aspect_ratio_adjustment,
+        )
+        .height
+    } else {
+        inherent_size.height
+    };
 
     let height = height.or_else(|| {
         if position.is_out_of_flow() {
@@ -321,7 +316,8 @@ pub(super) fn align_and_position_item(
         None
     });
     // Reapply aspect ratio after stretch and absolute position height adjustments
-    let Size { width, height } = Size { width, height }.maybe_apply_aspect_ratio(aspect_ratio);
+    let Size { width, height } =
+        super::apply_preferred_aspect_ratio(Size { width, height }, aspect_ratio, aspect_ratio_adjustment);
 
     // Clamp size by min and max width/height
     let Size { width, height } = Size { width, height }.maybe_clamp(min_size, max_size);
@@ -355,7 +351,7 @@ pub(super) fn align_and_position_item(
 
     let (x, x_margin) = align_item_within_area(
         Line { start: grid_area.left, end: grid_area.right },
-        justify_self.unwrap_or(alignment_styles.horizontal),
+        alignment_styles.horizontal,
         width,
         position,
         inset_horizontal,
@@ -365,7 +361,7 @@ pub(super) fn align_and_position_item(
     );
     let (y, y_margin) = align_item_within_area(
         Line { start: grid_area.top, end: grid_area.bottom },
-        align_self.unwrap_or(alignment_styles.vertical),
+        alignment_styles.vertical,
         height,
         position,
         inset_vertical,
@@ -459,7 +455,8 @@ pub(super) fn align_item_within_area(
     // Compute offset in the axis
     let alignment_based_offset = match alignment_keyword {
         // TODO: Add support for baseline alignment. For now we treat it as "start".
-        AlignItemsKeyword::Start
+        AlignItemsKeyword::Normal
+        | AlignItemsKeyword::Start
         | AlignItemsKeyword::FlexStart
         | AlignItemsKeyword::Baseline
         | AlignItemsKeyword::Stretch => {

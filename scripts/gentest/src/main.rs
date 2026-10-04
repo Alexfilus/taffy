@@ -692,6 +692,14 @@ fn generate_node(w: &mut XmlWriter, node: &Value) {
     maybe_write(w, "max-height", get_dim_attr(&style["maxSize"]["height"], Some("auto")));
 
     maybe_write(w, "aspect-ratio", get_num_attr(&style["aspectRatio"], None));
+    maybe_write(w, "intrinsic-width", get_num_attr(&style["intrinsicWidth"], None));
+    maybe_write(w, "intrinsic-height", get_num_attr(&style["intrinsicHeight"], None));
+    if style["itemIsReplaced"].as_bool().unwrap_or(false) {
+        w.write_attribute("item-is-replaced", "true");
+    }
+    if style["intrinsicAspectRatio"].as_bool().unwrap_or(false) {
+        w.write_attribute("aspect-ratio-is-intrinsic", "true");
+    }
 
     // TODO: null check in no gap case
     maybe_write(w, "row-gap", get_dim_attr(&style["gap"]["row"], None));

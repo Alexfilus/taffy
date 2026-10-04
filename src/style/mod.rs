@@ -98,6 +98,11 @@ pub trait CoreStyle {
     fn is_compressible_replaced(&self) -> bool {
         false
     }
+    /// Whether the preferred aspect ratio always applies to the content box.
+    #[inline(always)]
+    fn aspect_ratio_uses_content_box(&self) -> bool {
+        false
+    }
     /// Which box do size styles apply to
     #[inline(always)]
     fn box_sizing(&self) -> BoxSizing {
@@ -689,6 +694,8 @@ pub struct Style<S: CheapCloneStr = DefaultCheapStr> {
     /// Is it a replaced element like an image or form field?
     /// <https://drafts.csswg.org/css-sizing-3/#min-content-zero>
     pub item_is_replaced: bool,
+    /// Whether the preferred aspect ratio comes from intrinsic media dimensions.
+    pub item_aspect_ratio_is_intrinsic: bool,
     /// Should size styles apply to the content box or the border box of the node
     pub box_sizing: BoxSizing,
     /// Sets the direction of text, table and grid columns, and horizontal overflow.
@@ -848,6 +855,7 @@ impl<S: CheapCloneStr> Style<S> {
         display: Display::DEFAULT,
         item_is_table: false,
         item_is_replaced: false,
+        item_aspect_ratio_is_intrinsic: false,
         box_sizing: BoxSizing::BorderBox,
         direction: Direction::Ltr,
         overflow: Point { x: Overflow::Visible, y: Overflow::Visible },
@@ -947,6 +955,10 @@ impl<S: CheapCloneStr> CoreStyle for Style<S> {
         self.item_is_replaced
     }
     #[inline(always)]
+    fn aspect_ratio_uses_content_box(&self) -> bool {
+        self.item_aspect_ratio_is_intrinsic
+    }
+    #[inline(always)]
     fn box_sizing(&self) -> BoxSizing {
         self.box_sizing
     }
@@ -1033,6 +1045,10 @@ impl<T: CoreStyle> CoreStyle for &'_ T {
     #[inline(always)]
     fn is_compressible_replaced(&self) -> bool {
         (*self).is_compressible_replaced()
+    }
+    #[inline(always)]
+    fn aspect_ratio_uses_content_box(&self) -> bool {
+        (*self).aspect_ratio_uses_content_box()
     }
     #[inline(always)]
     fn box_sizing(&self) -> BoxSizing {
@@ -1536,6 +1552,7 @@ mod tests {
             display: Default::default(),
             item_is_table: false,
             item_is_replaced: false,
+            item_aspect_ratio_is_intrinsic: false,
             box_sizing: Default::default(),
             #[cfg(feature = "float_layout")]
             float: Default::default(),

@@ -592,7 +592,7 @@ fn compute_constants(
     let box_sizing_adjustment =
         if style.box_sizing() == BoxSizing::ContentBox { padding_border_sum } else { Size::ZERO };
 
-    let align_items = style.align_items().unwrap_or(AlignItems::STRETCH);
+    let align_items = style.align_items().unwrap_or(AlignItems::STRETCH).resolve_normal(AlignItems::STRETCH);
     let align_content = style.align_content().unwrap_or(AlignContent::STRETCH);
     let justify_content = style.justify_content();
     let layout_direction = style.direction();
@@ -765,11 +765,11 @@ fn generate_anonymous_flex_items(
                 border: child_style
                     .border()
                     .resolve_or_zero(constants.node_inner_size.width, |val, basis| tree.calc(val, basis)),
-                align_self: child_style.align_self().unwrap_or(constants.align_items).resolve_self_relative(
-                    child_style.direction(),
-                    constants.layout_direction,
-                    constants.is_column,
-                ),
+                align_self: child_style
+                    .align_self()
+                    .unwrap_or(constants.align_items)
+                    .resolve_normal(AlignSelf::STRETCH)
+                    .resolve_self_relative(child_style.direction(), constants.layout_direction, constants.is_column),
                 overflow: child_style.overflow(),
                 contain: child_style.contain(),
                 scrollbar_width: child_style.scrollbar_width(),
@@ -2405,7 +2405,7 @@ fn align_flex_items_along_cross_axis(
                 }
             }
         }
-        AlignItemsKeyword::Stretch => {
+        AlignItemsKeyword::Normal | AlignItemsKeyword::Stretch => {
             if constants.is_wrap_reverse ^ cross_axis_should_reverse {
                 free_space
             } else {
@@ -2795,11 +2795,11 @@ fn collect_oof_candidates(
             continue;
         }
 
-        let align_self = child_style.align_self().unwrap_or(constants.align_items).resolve_self_relative(
-            child_style.direction(),
-            constants.layout_direction,
-            constants.is_column,
-        );
+        let align_self = child_style
+            .align_self()
+            .unwrap_or(constants.align_items)
+            .resolve_normal(AlignSelf::STRETCH)
+            .resolve_self_relative(child_style.direction(), constants.layout_direction, constants.is_column);
         drop(child_style);
 
         // Main-axis static position (justify-content).
@@ -2865,9 +2865,9 @@ fn collect_oof_candidates(
                         AxisStaticEdge::End
                     }
                 }
-                (AlignItemsKeyword::Stretch | AlignItemsKeyword::FlexStart, false)
+                (AlignItemsKeyword::Normal | AlignItemsKeyword::Stretch | AlignItemsKeyword::FlexStart, false)
                 | (AlignItemsKeyword::FlexEnd, true) => AxisStaticEdge::Start,
-                (AlignItemsKeyword::Stretch | AlignItemsKeyword::FlexStart, true)
+                (AlignItemsKeyword::Normal | AlignItemsKeyword::Stretch | AlignItemsKeyword::FlexStart, true)
                 | (AlignItemsKeyword::FlexEnd, false) => AxisStaticEdge::End,
                 (AlignItemsKeyword::Center, _) => AxisStaticEdge::Center,
                 // SelfStart/SelfEnd are resolved to Start/End against the item's own direction
