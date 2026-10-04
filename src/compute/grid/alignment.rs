@@ -454,7 +454,11 @@ pub(super) fn align_item_within_area(
     };
 
     let overflows = resolved_size + non_auto_margin.sum() > grid_area_size;
-    let alignment_keyword = resolve_self_alignment_safety(alignment_style, overflows);
+    let alignment_keyword = if !position.is_out_of_flow() && auto_margin_count > 0 && overflows {
+        AlignItemsKeyword::Start
+    } else {
+        resolve_self_alignment_safety(alignment_style, overflows)
+    };
 
     // Compute offset in the axis
     let alignment_based_offset = match alignment_keyword {

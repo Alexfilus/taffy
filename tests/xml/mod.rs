@@ -31805,6 +31805,30 @@ mod grid {
 
     #[cfg(feature = "grid")]
     #[test]
+    fn grid_overflow_auto_margins_alignment__border_box_ltr() {
+        crate::run_xml_test("grid", "grid_overflow_auto_margins_alignment__border_box_ltr");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_overflow_auto_margins_alignment__content_box_ltr() {
+        crate::run_xml_test("grid", "grid_overflow_auto_margins_alignment__content_box_ltr");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_overflow_auto_margins_alignment__border_box_rtl() {
+        crate::run_xml_test("grid", "grid_overflow_auto_margins_alignment__border_box_rtl");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_overflow_auto_margins_alignment__content_box_rtl() {
+        crate::run_xml_test("grid", "grid_overflow_auto_margins_alignment__content_box_rtl");
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
     fn grid_overflow_inline_axis_hidden__border_box_ltr() {
         crate::run_xml_test("grid", "grid_overflow_inline_axis_hidden__border_box_ltr");
     }
